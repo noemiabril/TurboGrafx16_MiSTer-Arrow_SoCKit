@@ -1,8 +1,5 @@
 //============================================================================
 //
-//  Arrow SoCKit / DE10-Standard / DE1-SoC MiSTer hardware abstraction module 
-//  2022 by Somhic https://github.com/somhi, based on 2019 work by modernhackers
-//
 //  MiSTer hardware abstraction module
 //  (c)2017-2020 Alexey Melnikov
 //
@@ -30,21 +27,21 @@ module sys_top
 	input         FPGA_CLK3_50,
 
 	//////////// HDMI //////////
-	// output        HDMI_I2C_SCL,
-	// inout         HDMI_I2C_SDA,
+	//output        HDMI_I2C_SCL,
+	//inout         HDMI_I2C_SDA,
 
-	// output        HDMI_MCLK,
-	// output        HDMI_SCLK,
-	// output        HDMI_LRCLK,
-	// output        HDMI_I2S,
+	//output        HDMI_MCLK,
+	//output        HDMI_SCLK,
+	//output        HDMI_LRCLK,
+	//output        HDMI_I2S,
 
-	// output        HDMI_TX_CLK,
-	// output        HDMI_TX_DE,
-	// output [23:0] HDMI_TX_D,
-	// output        HDMI_TX_HS,
-	// output        HDMI_TX_VS,
+	//output        HDMI_TX_CLK,
+	//output        HDMI_TX_DE,
+	//output [23:0] HDMI_TX_D,
+	//output        HDMI_TX_HS,
+	//output        HDMI_TX_VS,
 	
-	// input         HDMI_TX_INT,
+	//input         HDMI_TX_INT,
 
 	//////////// SDR ///////////
 	output [12:0] SDRAM_A,
@@ -72,13 +69,12 @@ module sys_top
 
 `else
 	//////////// VGA ///////////
-	//SoCkit, DE10-standard, DE1-SoC implementation needs 8 bit color otherwise the brightness is low on the DAC
 	output  [7:0] VGA_R,
 	output  [7:0] VGA_G,
 	output  [7:0] VGA_B,
 	inout         VGA_HS,  // VGA_HS is secondary SD card detect when VGA_EN = 1 (inactive)
 	output		  VGA_VS,
-	//input       VGA_EN,  // active low
+	//input         VGA_EN,  // active low
 	//SoCkit, DE10-standard, DE1-SoC implementation for on-board VGA DAC route - additional pins
 	output 		  VGA_CLK,
 	output 		  VGA_BLANK_N,
@@ -88,8 +84,8 @@ module sys_top
 	output		  AUDIO_L,
 	output		  AUDIO_R,
 	output		  AUDIO_SPDIF,
-
-	//SoCkit, DE10-standard, DE1-SoC implementation for on-board AUDIO CODEC
+	//SoCkit, DE10-standard, DE1-SoC implementation for on-board Audio CODEC
+	// Audio CODEC
 	inout wire    AUD_ADCLRCK,  // Audio CODEC ADC LR Clock
 	input wire    AUD_ADCDAT,   // Audio CODEC ADC Data
 	inout wire    AUD_DACLRCK,  // Audio CODEC DAC LR Clock
@@ -116,20 +112,20 @@ module sys_top
 `endif
 
 	////////// I/O ALT /////////
-	// output        SD_SPI_CS,
-	// input         SD_SPI_MISO,
-	// output        SD_SPI_CLK,
-	// output        SD_SPI_MOSI,
+	//output        SD_SPI_CS,
+	//input         SD_SPI_MISO,
+	//output        SD_SPI_CLK,
+	//output        SD_SPI_MOSI,
 
 	inout         SDCD_SPDIF,
 	output        IO_SCL,
 	inout         IO_SDA,
 
 	////////// ADC //////////////
-	// output        ADC_SCK,
-	// input         ADC_SDO,
-	// output        ADC_SDI,
-	// output        ADC_CONVST,
+	//output        ADC_SCK,
+	//input         ADC_SDO,
+	//output        ADC_SDI,
+	//output        ADC_CONVST,
 
 	////////// MB KEY ///////////
 	input   [1:0] KEY,
@@ -140,7 +136,7 @@ module sys_top
 	inout   [3:0] SW,
 
 	////////// MB LED ///////////
-	//output  [7:0] LED
+	//output  [7:0] LED,
 	//SoCkit, DE10-standard, DE1-SoC board implementation
 	output LED_0_USER,
 	output LED_1_HDD,
@@ -188,7 +184,6 @@ assign VGA_EN = 1'b0;		//enable VGA mode when VGA_EN is low
 
 // DE10-Standard / DE1-SoC / Arrow SoCKit VGA mode
 assign SW[3] = 1'b0;		//necessary for VGA mode
-
 
 //////////////////////  Secondary SD  ///////////////////////////////////
 wire SD_CS, SD_CLK, SD_MOSI;
@@ -278,13 +273,13 @@ end
 
 // gp_in[31] = 0 - quick flag that FPGA is initialized (HPS reads 1 when FPGA is not in user mode)
 //                 used to avoid lockups while JTAG loading
-wire [31:0] gp_in = {1'b0, btn_user | btn[1], btn_osd | btn[0], SW[3], 8'd0, io_ver, io_ack, io_wide, io_dout | io_dout_sys};
+wire [31:0] gp_in = {1'b0, btn_user | btn[1], btn_osd | btn[0], SW[3], 8'd0, io_ver, io_ack, io_wide, io_dout};
 wire [31:0] gp_out;
 
 wire  [1:0] io_ver = 1; // 0 - obsolete. 1 - optimized HPS I/O. 2,3 - reserved for future.
 wire        io_wait;
 wire        io_wide;
-wire [15:0] io_dout;
+wire [15:0] io_dout;                  
 wire [15:0] io_din = gp_outr[15:0];
 wire        io_clk = gp_outr[17];
 wire        io_ss0 = gp_outr[18];
@@ -336,6 +331,7 @@ reg [15:0] cfg;
 
 reg        cfg_set      = 0;
 wire       vga_fb       = cfg[12] | vga_force_scaler;
+wire [1:0] hdmi_limited = {cfg[11],cfg[8]};
 
 `ifdef MISTER_DEBUG_NOHDMI
 wire       direct_video = 1;
@@ -343,6 +339,7 @@ wire       direct_video = 1;
 wire       direct_video = cfg[10];
 `endif
 
+wire       dvi_mode     = cfg[7];
 wire       audio_96k    = cfg[6];
 wire       csync_en     = cfg[3];
 wire       ypbpr_en     = cfg[5];
@@ -368,7 +365,7 @@ reg [11:0] VSET = 0, HSET = 0;
 reg        FREESCALE = 0;
 reg  [2:0] scaler_flt;
 reg        lowlat = 0;
-reg        cfg_done = 0;
+reg        cfg_dis = 0;
 
 reg        vs_wait = 0;
 reg [11:0] vs_line = 0;
@@ -388,16 +385,16 @@ reg [12:0] arc1x = 0;
 reg [12:0] arc1y = 0;
 reg [12:0] arc2x = 0;
 reg [12:0] arc2y = 0;
-reg [15:0] io_dout_sys;
 
 always@(posedge clk_sys) begin
 	reg  [7:0] cmd;
 	reg        has_cmd;
+	reg        old_strobe;
 	reg  [7:0] cnt = 0;
 	reg        vs_d0,vs_d1,vs_d2;
 	reg  [4:0] acx_att;
-	reg  [7:0] fb_crc;
 
+	old_strobe <= io_strobe;
 	coef_wr <= 0;
 
 `ifndef MISTER_DEBUG_NOHDMI
@@ -410,11 +407,9 @@ always@(posedge clk_sys) begin
 		areset <= 0;
 		acx_att <= 0;
 		acx <= acx >> acx_att;
-		io_dout_sys <= 0;
 	end
 	else
-	if(io_strobe) begin
-		io_dout_sys <= 0;
+	if(~old_strobe & io_strobe) begin
 		if(!has_cmd) begin
 			has_cmd <= 1;
 			cmd <= io_din[7:0];
@@ -431,10 +426,6 @@ always@(posedge clk_sys) begin
 				acy2 <= -24'd2023767;
 				areset <= 1;
 			end
-			if(io_din[7:0] == 'h20) io_dout_sys <= 1;
-`ifndef MISTER_DEBUG_NOHDMI
-			if(io_din[7:0] == 'h40) io_dout_sys <= fb_crc;
-`endif
 		end
 		else begin
 			cnt <= cnt + 1'd1;
@@ -447,14 +438,14 @@ always@(posedge clk_sys) begin
 				cfg_set <= 0;
 				if(cnt<8) begin
 					case(cnt[2:0])
-						0: {HDMI_PR,WIDTH} <= {io_din[15], io_din[11:0]};
-						1: HFP             <= io_din[11:0];
-						2: HS              <= {io_din[15], io_din[11:0]};
-						3: HBP             <= io_din[11:0];
-						4: HEIGHT          <= io_din[11:0];
-						5: VFP             <= io_din[11:0];
-						6: VS              <= {io_din[15],io_din[11:0]};
-						7: VBP             <= io_din[11:0];
+						0: WIDTH      <= io_din[11:0];
+						1: HFP        <= io_din[11:0];
+						2: HS         <= {io_din[15], io_din[11:0]};
+						3: HBP        <= io_din[11:0];
+						4: HEIGHT     <= io_din[11:0];
+						5: VFP        <= io_din[11:0];
+						6: VS         <= {io_din[15],io_din[11:0]};
+						7: VBP        <= io_din[11:0];
 					endcase
 `ifndef MISTER_DEBUG_NOHDMI
 					if(cnt == 1) begin
@@ -471,7 +462,7 @@ always@(posedge clk_sys) begin
 						cfg_custom_t <= ~cfg_custom_t;
 						cnt[2:0] <= 3'b100;
 					end
-					if(cnt == 8) {lowlat,cfg_done} <= {io_din[15],1'b1};
+					if(cnt == 8) {lowlat,cfg_dis} <= io_din[15:14];
 `endif
 				end
 			end
@@ -528,29 +519,9 @@ always@(posedge clk_sys) begin
 			end
 `ifndef MISTER_DEBUG_NOHDMI
 			if(cmd == 'h3E) {shadowmask_wr,shadowmask_data} <= {1'b1, io_din};
-			if(cmd == 'h40) begin
-				case(cnt[3:0])
-					0: io_dout_sys <= {arxy, arx};
-					1: io_dout_sys <= {arxy, ary};
-					2: io_dout_sys <= {LFB_EN, FB_EN, FB_FMT};
-					3: io_dout_sys <= FB_WIDTH;
-					4: io_dout_sys <= FB_HEIGHT;
-					5: io_dout_sys <= FB_BASE[15:0];
-					6: io_dout_sys <= FB_BASE[31:16];
-					7: io_dout_sys <= FB_STRIDE;
-				endcase
-			end
 `endif
 		end
 	end
-
-`ifndef MISTER_DEBUG_NOHDMI
-	fb_crc <= {LFB_EN, FB_EN, FB_FMT}
-				^ FB_WIDTH[7:0]  ^ FB_WIDTH[11:8] 
-				^ FB_HEIGHT[7:0] ^ FB_HEIGHT[11:8] 
-				^ arx[7:0] ^ arx[11:8] ^ arxy
-				^ ary[7:0] ^ ary[11:8];
-`endif
 
 	vs_d0 <= HDMI_TX_VS;
 	if(vs_d0 == HDMI_TX_VS) vs_d1 <= vs_d0;
@@ -724,11 +695,6 @@ wire clk_hdmi  = hdmi_clk_out;
 ascal 
 #(
 	.RAMBASE(32'h20000000),
-`ifdef MISTER_SMALL_VBUF
-	.RAMSIZE(32'h00100000),
-`else
-	.RAMSIZE(32'h00800000),
-`endif
 `ifndef MISTER_FB
 	.PALETTE2("false"),
 `else
@@ -899,40 +865,37 @@ reg [11:0] vmax;
 reg [11:0] hdmi_height;
 reg [11:0] hdmi_width;
 
-reg [11:0] arx;
-reg [11:0] ary;
-reg        arxy;
-
 always @(posedge clk_vid) begin
 	reg [11:0] hmini,hmaxi,vmini,vmaxi;
-	reg [11:0] wcalc,videow;
-	reg [11:0] hcalc,videoh;
+	reg [11:0] wcalc,videow,arx;
+	reg [11:0] hcalc,videoh,ary;
 	reg  [2:0] state;
+	reg        xy;
 
 	hdmi_height <= (VSET && (VSET < HEIGHT)) ? VSET : HEIGHT;
-	hdmi_width  <= (HSET && (HSET < WIDTH))  ? HSET << HDMI_PR : WIDTH << HDMI_PR;
+	hdmi_width  <= (HSET && (HSET < WIDTH))  ? HSET : WIDTH;
 
 	if(!ARY) begin
 		if(ARX == 1) begin
-			arx  <= arc1x[11:0];
-			ary  <= arc1y[11:0];
-			arxy <= arc1x[12] | arc1y[12];
+			arx <= arc1x[11:0];
+			ary <= arc1y[11:0];
+			xy  <= arc1x[12] | arc1y[12];
 		end
 		else if(ARX == 2) begin
-			arx  <= arc2x[11:0];
-			ary  <= arc2y[11:0];
-			arxy <= arc2x[12] | arc2y[12];
+			arx <= arc2x[11:0];
+			ary <= arc2y[11:0];
+			xy  <= arc2x[12] | arc2y[12];
 		end
 		else begin
-			arx  <= 0;
-			ary  <= 0;
-			arxy <= 0;
+			arx <= 0;
+			ary <= 0;
+			xy  <= 0;
 		end
 	end
 	else begin
-		arx  <= ARX[11:0];
-		ary  <= ARY[11:0];
-		arxy <= ARX[12] | ARY[12];
+		arx <= ARX[11:0];
+		ary <= ARY[11:0];
+		xy  <= ARX[12] | ARY[12];
 	end
 	
 	ar_md_start <= 0;
@@ -950,7 +913,7 @@ always @(posedge clk_vid) begin
 				hcalc <= hdmi_height;
 				state <= 6;
 			end
-			else if(arxy) begin
+			else if(xy) begin
 				wcalc <= arx;
 				hcalc <= ary;
 				state <= 6;
@@ -979,7 +942,7 @@ always @(posedge clk_vid) begin
 			end
 
 		6: begin
-				videow <= (wcalc > hdmi_width)  ? (hdmi_width >> HDMI_PR)  : (wcalc[11:0] >> HDMI_PR);
+				videow <= (wcalc > hdmi_width)  ? hdmi_width  : wcalc[11:0];
 				videoh <= (hcalc > hdmi_height) ? hdmi_height : hcalc[11:0];
 			end
 
@@ -1005,7 +968,7 @@ pll_hdmi_adj pll_hdmi_adj
 	.reset_na(~reset_req),
 
 	.llena(lowlat),
-	.lltune({16{cfg_done}} & lltune),
+	.lltune({16{hdmi_config_done | cfg_dis}} & lltune),
 	.locked(led_locked),
 	.i_waitrequest(adj_waitrequest),
 	.i_write(adj_write),
@@ -1053,15 +1016,14 @@ pll_hdmi pll_hdmi
 `endif
 
 //1920x1080@60 PCLK=148.5MHz CEA
-reg  [11:0] WIDTH   = 1920;
-reg  [11:0] HFP     = 88;
-reg  [12:0] HS      = 48;
-reg  [11:0] HBP     = 148;
-reg  [11:0] HEIGHT  = 1080;
-reg  [11:0] VFP     = 4;
-reg  [12:0] VS      = 5;
-reg  [11:0] VBP     = 36;
-reg         HDMI_PR = 0;
+reg  [11:0] WIDTH  = 1920;
+reg  [11:0] HFP    = 88;
+reg  [12:0] HS     = 48;
+reg  [11:0] HBP    = 148;
+reg  [11:0] HEIGHT = 1080;
+reg  [11:0] VFP    = 4;
+reg  [12:0] VS     = 5;
+reg  [11:0] VBP    = 36;
 
 wire [63:0] reconfig_to_pll;
 wire [63:0] reconfig_from_pll;
@@ -1133,6 +1095,22 @@ end
 wire cfg_ready = 1;
 
 `endif
+
+wire hdmi_config_done;
+hdmi_config hdmi_config
+(
+	.iCLK(FPGA_CLK1_50),
+	.iRST_N(cfg_ready & ~HDMI_TX_INT & ~cfg_dis),
+	.done(hdmi_config_done),
+
+	.I2C_SCL(HDMI_I2C_SCL),
+	.I2C_SDA(HDMI_I2C_SDA),
+
+	.dvi_mode(dvi_mode),
+	.audio_96k(audio_96k),
+	.limited(hdmi_limited),
+	.ypbpr(ypbpr_en & direct_video)
+);
 
 assign HDMI_I2C_SCL = hdmi_scl_en ? 1'b0 : 1'bZ;
 assign HDMI_I2C_SDA = hdmi_sda_en ? 1'b0 : 1'bZ;
@@ -1218,7 +1196,7 @@ reg        dv_hs, dv_vs, dv_de;
 always @(posedge clk_vid) begin
 	reg [23:0] dv_d1, dv_d2;
 	reg        dv_de1, dv_de2, dv_hs1, dv_hs2, dv_vs1, dv_vs2;
-	reg [12:0] vsz, vcnt, vcnt_l, vcnt_ll;
+	reg [12:0] vsz, vcnt;
 	reg        old_hs, old_vs;
 	reg        vde;
 	reg  [3:0] hss;
@@ -1230,11 +1208,7 @@ always @(posedge clk_vid) begin
 		if(~old_hs && vga_hs_osd) begin
 			old_vs <= vga_vs_osd;
 			if(~&vcnt) vcnt <= vcnt + 1'd1;
-			if(~old_vs & vga_vs_osd) begin
-				if (vcnt != vcnt_ll || vcnt < vcnt_l) vsz <= vcnt;
-				vcnt_l <= vcnt;
-				vcnt_ll <= vcnt_l;
-			end
+			if(~old_vs & vga_vs_osd & ~f1) vsz <= vcnt;
 			if(old_vs & ~vga_vs_osd) vcnt <= 0;
 			
 			if(vcnt == 1) vde <= 1;
@@ -1412,14 +1386,13 @@ csync csync_vga(clk_vid, vga_hs_osd, vga_vs_osd, vga_cs_osd);
 
 	assign VGA_VS = (VGA_EN | SW[3]) ? 1'bZ      :((((vga_fb | vga_scaler) ? ~vgas_vs : ~vga_vs) | csync_en) ^ VS[12]);
 	assign VGA_HS = (VGA_EN | SW[3]) ? 1'bZ      : (((vga_fb | vga_scaler) ? (csync_en ? ~vgas_cs : ~vgas_hs) : (csync_en ? ~vga_cs : ~vga_hs)) ^ HS[12]);
-	//DE10-standard / DE1-SoC / SoCkit implementation for on-board VGA DAC route - additional 2 bit per color
 	assign VGA_R  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[23:16] : vga_o[23:16];
-	assign VGA_G  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[15:8]  : vga_o[15:8] ;
+	assign VGA_G  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[15:8] : vga_o[15:8];
 	assign VGA_B  = (VGA_EN | SW[3]) ? 8'bZZZZZZZZ :   (vga_fb | vga_scaler) ? vgas_o[7:0]   : vga_o[7:0]  ;
 	//DE10-standard / DE1-SoC / SoCkit implementation for on-board VGA DAC route - additional pins
 	assign VGA_BLANK_N = VGA_HS && VGA_VS;  //VGA DAC additional required pin
 	assign VGA_SYNC_N = 0; 					//VGA DAC additional required pin
-	assign VGA_CLK = HDMI_TX_CLK; 			//has to define a clock to VGA DAC clock otherwise the picture is noisy 
+	assign VGA_CLK = HDMI_TX_CLK; 			//has to define a clock to VGA DAC clock otherwise
 `endif
 
 reg video_sync = 0;
@@ -1533,8 +1506,7 @@ alsa alsa
 	.pcm_r(alsa_r)
 );
 
-
-//// DE10-Standard / DE1-SoC / SoCkit Audio CODEC implementation
+//// DE10-Standard / DE1-SoC / SoCkit Audio CODEC
 
 assign AUD_MUTE    = 1'b1;
 assign AUD_XCK     = HDMI_MCLK;
@@ -1551,7 +1523,6 @@ I2C_AV_Config audio_config (
   .oI2C_SCLK    (AUD_I2C_SCLK         ),
   .oI2C_SDAT    (AUD_I2C_SDAT         )
 );
-
 
 ////////////////  User I/O (USB 3.0 connector) /////////////////////////
 
